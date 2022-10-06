@@ -4,14 +4,17 @@ from inspect import getmembers, isfunction, ismethod
 from fastapi import FastAPI
 
 
+def get_function_list(module):
+    return getmembers(module, lambda x: isfunction(x) or ismethod(x))
+
+
 def add_routes(app: FastAPI):
     modules = ['user']
     for module_name in modules:
-        module = import_module(f'.{module_name}', 'core')
-        func_list = getmembers(module, lambda x: isfunction(x) or ismethod(x))
+        module = import_module(f'.{module_name}', 'app')
 
-        for func_name, func in func_list:
+        for _, func in get_function_list(module):
             app.add_api_route(
-                path=f'/{func.__module__.split(".")[-1]}/{func_name}',
+                path=f'/{func.__module__.split(".")[-1]}/{func.__name__}/',
                 endpoint=func
             )
