@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 
+variable = 'teste'
 
-class Item(BaseModel):
+
+class User(BaseModel):
     name: str
     price: float
     # is_offer: Union[bool, None] = None
 
 
 def create():
-    return 0
+    return create.__module__ + '--' + variable
