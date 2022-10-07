@@ -1,3 +1,4 @@
+from typing import Union
 from pydantic import BaseModel
 
 variable = 'teste'
@@ -6,7 +7,7 @@ variable = 'teste'
 class User(BaseModel):
     name: str
     price: float
-    # is_offer: Union[bool, None] = None
+    is_offer: Union[bool, None] = None
 
 
 def create():
