@@ -11,7 +11,7 @@ app = FastAPI()
 
 router = CrudRouter(app)
 router.add_class(UserEndpoints)
-router.add_class(ProductEndpoints)
+# router.add_class(ProductEndpoints)
 # router.get_methods()
 
 

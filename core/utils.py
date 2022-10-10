@@ -6,6 +6,8 @@ from typing import Dict, List, Sequence, Tuple, Type, Callable
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+# from core.consts import CREATE, READ, UPDATE, DELETE, METHOD_LIST, METHOD_TYPE_LIST
+from core import consts
 from core.endpoints import BaseEndpoint
 
 from .singleton import Singleton
@@ -84,21 +86,21 @@ def add_routes(app: FastAPI):
 
 
 class CrudRouter(metaclass=Singleton):
-    CREATE: str = 'create'
-    READ: str = 'read'
-    UPDATE: str = 'update'
-    DELETE: str = 'delete'
-    METHOD_LIST: List[str] = [CREATE, READ, UPDATE, DELETE]
-    METHOD_TYPE_LIST: List[Tuple[str, str]] = [
-        (CREATE, 'POST'),
-        (READ, 'GET'),
-        (UPDATE, 'PUT'),
-        (DELETE, 'DELETE'),
-    ]
 
     def __init__(self, app: FastAPI) -> None:
         self.app: FastAPI = app
         self.__router_classes: List[Type[BaseEndpoint]] = []
+
+    def __add_api_route(self, cls: Type[BaseEndpoint], endpoint_func_name: str, method_type: str) -> bool:
+        for func_name, func in self.__get_func_list(cls):
+            if func_name == endpoint_func_name:
+                self.app.add_api_route(
+                    path=f'/{cls.get_endpoint()}/{func_name}/',
+                    endpoint=func,
+                    methods=[method_type],
+                )
+                return True
+        return False
 
     def __factory(self, type: str, cls: Type) -> Callable:
         def create():
@@ -114,39 +116,42 @@ class CrudRouter(metaclass=Singleton):
             return cls.__name__
 
         match type:
-            case self.CREATE:
+            case consts.CREATE:
                 return create
-            case self.READ:
+            case consts.READ:
                 return read
-            case self.UPDATE:
+            case consts.UPDATE:
                 return update
-            case self.DELETE:
+            case consts.DELETE:
                 return delete
             case _:
                 raise RuntimeError(f'Method type {type} not implemented.')
 
+    def __get_func_list(self, cls: Type[BaseEndpoint]) -> List[Tuple[str, Callable]]:
+        return getmembers(cls, lambda x: (isfunction(x) or ismethod(x)) and (x.__name__ in consts.ENDPOINT_FUNC_LIST))
+
+    def __get_model(self, cls: Type[BaseEndpoint], module_name: str):
+        def class_filter(x):
+            return isclass(x) and issubclass(x, BaseModel) and x.__name__.lower() == module_name
+
+        try:
+            _, model_class = getmembers(cls, class_filter)[0]
+            return model_class
+        except IndexError:
+            raise IndexError(
+                f'Class inherated pydantic.BaseModel not declared on {module_name} module')
+
     def __make_endpoint_methods(self, cls: Type[BaseEndpoint]) -> None:
-        func_list: List[Tuple[str, Callable]] = getmembers(cls, lambda x: (
-            isfunction(x) or ismethod(x)) and (x.__name__ in self.METHOD_LIST))
+        for endpoint_func_name, method_type in consts.ENDPOINT_FUNC_TYPE_LIST:
+            has_endpoint_func: bool = self.__add_api_route(
+                cls, endpoint_func_name, method_type)
 
-        for method_type_name, method_type in self.METHOD_TYPE_LIST:
-            has_method = False
-            for func_name, func in func_list:
-                has_method = func_name == method_type_name
-                if has_method:
-                    self.app.add_api_route(
-                        path=f'/{cls.get_endpoint()}/{func_name}/',
-                        endpoint=func,
-                        methods=[method_type],
-                    )
-                    break
+            if not has_endpoint_func:
+                print(f'Need create {endpoint_func_name}')
+                endpoint_func = self.__factory(endpoint_func_name, cls)
+                endpoint_func.__module__ = cls.__name__
 
-            if not has_method:
-                print(f'Need create {method_type_name}')
-                method = self.__factory(method_type_name, cls)
-                method.__module__ = cls.__name__
-
-                sig = signature(method)
+                sig = signature(endpoint_func)
                 params: Sequence[Parameter] = []
                 # param = Parameter(
                 #     'module_name',
@@ -155,13 +160,13 @@ class CrudRouter(metaclass=Singleton):
                 # )
                 # params.append(param)
 
-                method.__signature__ = sig.replace(  # type: ignore
+                endpoint_func.__signature__ = sig.replace(  # type: ignore
                     parameters=params)
 
-                cls.new_func = method  # type: ignore
+                cls.new_func = endpoint_func  # type: ignore
                 self.app.add_api_route(
-                    path=f'/{cls.get_endpoint()}/{method.__name__}/',
-                    endpoint=method,
+                    path=f'/{cls.get_endpoint()}/{endpoint_func.__name__}/',
+                    endpoint=endpoint_func,
                     methods=[method_type],
                 )
 
