@@ -1,88 +1,15 @@
 from importlib import import_module
 from inspect import getmembers, isclass, isfunction, ismethod, signature, Parameter
-from turtle import up
 from typing import Dict, List, Sequence, Tuple, Type, Callable
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-# from core.consts import CREATE, READ, UPDATE, DELETE, METHOD_LIST, METHOD_TYPE_LIST
 from core import consts
 from core.endpoints import BaseEndpoint
+from core.models import MethodType
 
 from .singleton import Singleton
-
-"""
-def get_function_list(module):
-    return getmembers(module, lambda x: isfunction(x) or ismethod(x))
-
-
-def get_model(module, module_name: str):
-    def class_filter(x):
-        return isclass(x) and issubclass(x, BaseModel) and x.__name__.lower() == module_name
-
-    try:
-        _, model_class = getmembers(module, class_filter)[0]
-        return model_class
-    except IndexError:
-        raise IndexError(
-            f'Class inherated pydantic.BaseModel not declared on {module_name} module')
-
-
-def add_routes(app: FastAPI):
-
-    def factory(type, module):
-        def create():
-            return module.__name__
-
-        def read():
-            return module.__name__
-
-        def update():
-            return module.__name__
-
-        def delete():
-            return module.__name__
-
-        methods = {
-            'create': (create, 'POST'),
-            'read': (read, 'GET'),
-            'update': (update, 'PUT'),
-            'delete': (delete, 'DELETE')
-        }
-
-        return methods[type]
-
-    modules = ['user']
-    for module_name in modules:
-        module = import_module('.endpoints', f'app.{module_name}')
-
-        model_class = get_model(module, module_name)
-
-        method, method_type = factory('delete', module)
-        method.__module__ = module.__name__
-
-        sig = signature(method)
-        params = []
-        param = Parameter(
-            module_name,
-            kind=Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=model_class
-        )
-        params.append(param)
-        method.__signature__ = sig.replace(parameters=params)
-
-        module.new_func = method
-
-        for _, func in get_function_list(module):
-            print(func)
-            app.add_api_route(
-                path=f'/{func.__module__.split(".")[-2]}/{func.__name__}/',
-                endpoint=func,
-                # methods=[method_type],
-            )
-
-"""
 
 
 class CrudRouter(metaclass=Singleton):
@@ -130,36 +57,30 @@ class CrudRouter(metaclass=Singleton):
     def __get_func_list(self, cls: Type[BaseEndpoint]) -> List[Tuple[str, Callable]]:
         return getmembers(cls, lambda x: (isfunction(x) or ismethod(x)) and (x.__name__ in consts.ENDPOINT_FUNC_LIST))
 
-    def __get_model(self, cls: Type[BaseEndpoint], module_name: str):
-        def class_filter(x):
-            return isclass(x) and issubclass(x, BaseModel) and x.__name__.lower() == module_name
-
-        try:
-            _, model_class = getmembers(cls, class_filter)[0]
-            return model_class
-        except IndexError:
-            raise IndexError(
-                f'Class inherated pydantic.BaseModel not declared on {module_name} module')
-
     def __make_endpoint_methods(self, cls: Type[BaseEndpoint]) -> None:
-        for endpoint_func_name, method_type in consts.ENDPOINT_FUNC_TYPE_LIST:
+        for method_type in consts.ENDPOINT_FUNC_TYPE_LIST:
+            method_type.endpoint_name
+
             has_endpoint_func: bool = self.__add_api_route(
-                cls, endpoint_func_name, method_type)
+                cls, method_type.endpoint_name, method_type.method_type)
 
             if not has_endpoint_func:
-                print(f'Need create {endpoint_func_name}')
-                endpoint_func = self.__factory(endpoint_func_name, cls)
+                print(f'Need create {method_type.endpoint_name}')
+                endpoint_func = self.__factory(method_type.endpoint_name, cls)
                 endpoint_func.__module__ = cls.__name__
 
                 sig = signature(endpoint_func)
-                params: Sequence[Parameter] = []
-                # param = Parameter(
-                #     'module_name',
-                #     kind=Parameter.POSITIONAL_OR_KEYWORD,
-                #     # annotation=model_class
-                # )
-                # params.append(param)
+                params: List[Parameter] = []
+                print(method_type)
+                if method_type.need_model:
+                    param = Parameter(
+                        cls.get_endpoint(),
+                        kind=Parameter.POSITIONAL_OR_KEYWORD,
+                        annotation=cls.get_model()
+                    )
+                    params.append(param)
 
+                print(params)
                 endpoint_func.__signature__ = sig.replace(  # type: ignore
                     parameters=params)
 
@@ -167,7 +88,7 @@ class CrudRouter(metaclass=Singleton):
                 self.app.add_api_route(
                     path=f'/{cls.get_endpoint()}/{endpoint_func.__name__}/',
                     endpoint=endpoint_func,
-                    methods=[method_type],
+                    methods=[method_type.method_type],
                 )
 
     def add_class(self, cls: Type[BaseEndpoint]):

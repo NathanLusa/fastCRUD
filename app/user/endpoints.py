@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Type
 from pydantic import BaseModel
 
 from core.endpoints import BaseEndpoint
@@ -16,9 +16,13 @@ class User(BaseModel):
 class UserEndpoints(BaseEndpoint):
 
     @staticmethod
-    def create() -> str:
+    def create(user: User) -> str:
         return UserEndpoints.create.__module__ + '--' + variable
 
     @staticmethod
     def get_endpoint() -> str:
         return 'user'
+
+    @staticmethod
+    def get_model() -> Type[BaseModel]:
+        return User

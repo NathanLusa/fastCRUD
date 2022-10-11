@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+from typing import Type
 
 
 class BaseEndpoint():
@@ -7,4 +9,8 @@ class BaseEndpoint():
 
     @staticmethod
     def get_endpoint() -> str:
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_model() -> Type[BaseModel]:
         raise NotImplementedError()
