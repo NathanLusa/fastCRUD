@@ -8,7 +8,7 @@ class BaseEndpoint():
         pass
 
     @staticmethod
-    def get_endpoint() -> str:
+    def get_endpoint_name() -> str:
         raise NotImplementedError()
 
     @staticmethod

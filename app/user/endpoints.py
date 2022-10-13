@@ -20,7 +20,7 @@ class UserEndpoints(BaseEndpoint):
         return UserEndpoints.create.__module__ + '--' + variable
 
     @staticmethod
-    def get_endpoint() -> str:
+    def get_endpoint_name() -> str:
         return 'user'
 
     @staticmethod
