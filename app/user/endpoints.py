@@ -8,6 +8,7 @@ variable = 'teste'
 
 
 class User(BaseModel):
+    id: int
     name: str
     price: float
     is_offer: Union[bool, None] = None
@@ -15,9 +16,9 @@ class User(BaseModel):
 
 class UserEndpoints(BaseEndpoint):
 
-    @staticmethod
-    def create(user: User) -> str:
-        return UserEndpoints.create.__module__ + '--' + variable
+    # @staticmethod
+    # def create(user: User) -> str:
+    #     return UserEndpoints.create.__module__ + '--' + variable
 
     @staticmethod
     def get_endpoint_name() -> str:

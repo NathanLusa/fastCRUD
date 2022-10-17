@@ -1,25 +1,19 @@
 from typing import List, Type
 
-from .models import MethodType
+from .models import MethodType, Path
 
 CREATE: str = 'create'
 READ: str = 'read'
+READ_ALL: str = 'read_all'
 UPDATE: str = 'update'
 DELETE: str = 'delete'
 
-ENDPOINT_FUNC_LIST: List[str] = [CREATE, READ, UPDATE, DELETE]
-
-# ENDPOINT_FUNC_TYPE_LIST: List[Tuple[str, str]] = [
-#     (CREATE, 'POST'),
-#     (READ, 'GET'),
-#     (UPDATE, 'PUT'),
-#     (DELETE, 'DELETE'),
-# ]
-
+ENDPOINT_FUNC_LIST: List[str] = [CREATE, READ, READ_ALL, UPDATE, DELETE]
 
 ENDPOINT_FUNC_TYPE_LIST: List[MethodType] = [
-    MethodType(endpoint_name=CREATE, method_type='POST', need_model=True),
-    MethodType(endpoint_name=READ, method_type='GET'),
-    MethodType(endpoint_name=UPDATE, method_type='PUT', need_model=True),
-    MethodType(endpoint_name=DELETE, method_type='DELETE'),
+    MethodType(CREATE, 'POST', need_model=True),
+    MethodType(READ, 'GET', path=Path(suffix='_id')),
+    MethodType(READ_ALL, 'GET'),
+    MethodType(UPDATE, 'PUT', need_model=True, path=Path(suffix='_id')),
+    MethodType(DELETE, 'DELETE', path=Path(suffix='_id')),
 ]

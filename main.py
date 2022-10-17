@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from core.utils import CrudRouter
+from core.crud_router import CrudRouter
 from app.product.endpoints import ProductEndpoints
 from app.user.endpoints import UserEndpoints
 
@@ -11,7 +11,7 @@ app = FastAPI()
 
 router = CrudRouter(app)
 router.add_class(UserEndpoints)
-# router.add_class(ProductEndpoints)
+router.add_class(ProductEndpoints)
 # router.get_methods()
 
 
