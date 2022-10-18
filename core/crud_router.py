@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from inspect import Parameter
 from typing import List, Type, Callable
 
@@ -11,35 +12,30 @@ from core.utils import PaginationParams, model_factory, get_func, get_path, crea
 
 
 class CrudRouter(metaclass=Singleton):
+    _router_classes: List[Type[BaseEndpoint]] = []
 
     def __init__(self, app: FastAPI) -> None:
         self.app: FastAPI = app
-        self._router_classes: List[Type[BaseEndpoint]] = []
 
-    def _create(self, cls: Type[BaseEndpoint], *args, **kwargs):
-        def route(*args, **kwargs):
-            return cls.__name__ + ' from route'
-        return route
+    @abstractmethod
+    def _create(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        raise NotImplementedError
 
+    @abstractmethod
     def _read(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
-        def route(*args, **kwargs):
-            return cls.__name__ + ' from route read'
-        return route
+        raise NotImplementedError
 
+    @abstractmethod
     def _read_all(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
-        def route(*args, **kwargs):
-            return cls.__name__ + ' from route read all'
-        return route
+        raise NotImplementedError
 
+    @abstractmethod
     def _update(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
-        def route(*args, **kwargs):
-            return cls.__name__ + ' from route update'
-        return route
+        raise NotImplementedError
 
+    @abstractmethod
     def _delete(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
-        def route(*args, **kwargs):
-            return cls.__name__ + ' from route delete'
-        return route
+        raise NotImplementedError
 
     def _factory(self, method_type: MethodType, cls: Type[BaseEndpoint]) -> Callable:
         params: List[Parameter] = []
@@ -117,3 +113,35 @@ class CrudRouter(metaclass=Singleton):
     def add_class(self, cls: Type[BaseEndpoint]):
         self._router_classes.append(cls)
         self._make_endpoint_methods(cls)
+
+
+class MemCrudRouter(CrudRouter):
+
+    def _create(self, cls: Type[BaseEndpoint], *args, **kwargs):
+        def route(*args, **kwargs):
+            return cls.__name__ + ' from route'
+        return route
+
+    def _read(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        def route(*args, **kwargs):
+            return cls.__name__ + ' from route read'
+        return route
+
+    def _read_all(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        def route(*args, **kwargs):
+            return cls.__name__ + ' from route read all'
+        return route
+
+    def _update(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        def route(*args, **kwargs):
+            return cls.__name__ + ' from route update'
+        return route
+
+    def _delete(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        def route(*args, **kwargs):
+            return cls.__name__ + ' from route delete'
+        return route
+
+
+class AlchemyCrudRouter(CrudRouter):
+    pass
