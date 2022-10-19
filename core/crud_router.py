@@ -1,8 +1,25 @@
 from abc import ABC, abstractmethod
 from inspect import Parameter
-from typing import List, Type, Callable
+from typing import List, Type, Callable, Generator, Any
 
-from fastapi import APIRouter, Depends, FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+# from sqlalchemy.orm import Session
+# from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+# from sqlalchemy.exc import IntegrityError
+
+try:
+    from sqlalchemy.orm import Session
+    from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+    from sqlalchemy.exc import IntegrityError
+except ImportError:
+    Model = None
+    Session = None
+    IntegrityError = None
+    sqlalchemy_installed = False
+else:
+    sqlalchemy_installed = True
+    Session = Callable[..., Generator[Session, Any, None]]
+
 
 from core import consts
 from core.endpoints import BaseEndpoint
@@ -144,4 +161,24 @@ class MemCrudRouter(CrudRouter):
 
 
 class AlchemyCrudRouter(CrudRouter):
-    pass
+
+    def __init__(self, app: FastAPI, db: Session) -> None:
+        self.db_func = db
+        super().__init__(app=app)
+
+    def _create(self, db_schema) -> Callable:
+        def route(
+            model: self.create_schema,  # type: ignore
+            db: Session = Depends(self.db_func),
+        ) -> Model:
+            try:
+                db_model: Model = db_schema(**model.dict())
+                db.add(db_model)
+                db.commit()
+                db.refresh(db_model)
+                return db_model
+            except IntegrityError:
+                db.rollback()
+                raise HTTPException(422, "Key already exists") from None
+
+        return route
