@@ -11,9 +11,9 @@ DELETE: str = 'delete'
 ENDPOINT_FUNC_LIST: List[str] = [CREATE, READ, READ_ALL, UPDATE, DELETE]
 
 ENDPOINT_FUNC_TYPE_LIST: List[MethodType] = [
-    MethodType(CREATE, 'POST', need_model=True),
+    MethodType(CREATE, 'POST', need_schema=True),
     MethodType(READ, 'GET', path=Path(suffix='_id')),
     MethodType(READ_ALL, 'GET'),
-    MethodType(UPDATE, 'PUT', need_model=True, path=Path(suffix='_id')),
+    MethodType(UPDATE, 'PUT', need_schema=True, path=Path(suffix='_id')),
     MethodType(DELETE, 'DELETE', path=Path(suffix='_id')),
 ]

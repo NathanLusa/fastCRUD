@@ -7,25 +7,25 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException
 # from sqlalchemy.ext.declarative import DeclarativeMeta as Model
 # from sqlalchemy.exc import IntegrityError
 
-try:
-    from sqlalchemy.orm import Session
-    from sqlalchemy.ext.declarative import DeclarativeMeta as Model
-    from sqlalchemy.exc import IntegrityError
-except ImportError:
-    Model = None
-    Session = None
-    IntegrityError = None
-    sqlalchemy_installed = False
-else:
-    sqlalchemy_installed = True
-    Session = Callable[..., Generator[Session, Any, None]]
+# try:
+#     from sqlalchemy.orm import Session
+#     from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+#     from sqlalchemy.exc import IntegrityError
+# except ImportError:
+#     Model = None
+#     Session = None
+#     IntegrityError = None
+#     sqlalchemy_installed = False
+# else:
+#     sqlalchemy_installed = True
+#     Session = Callable[..., Generator[Session, Any, None]]
 
 
 from core import consts
 from core.endpoints import BaseEndpoint
 from core.models import MethodType
 from core.singleton import Singleton
-from core.utils import PaginationParams, model_factory, get_func, get_path, create_parameter, replace_signature
+from core.utils import PaginationParams, schema_factory, get_func, get_path, create_parameter, replace_signature
 
 
 class CrudRouter(metaclass=Singleton):
@@ -80,17 +80,17 @@ class CrudRouter(metaclass=Singleton):
             case _:
                 raise RuntimeError(f'Method type {type} not implemented.')
 
-        if method_type.need_model:
-            model_class = cls.get_model()
+        if method_type.need_schema:
+            schema_class = cls.get_schema()
             if method_type.endpoint_name == consts.CREATE:
-                model_class = model_factory(
-                    cls.get_model(),
+                schema_class = schema_factory(
+                    cls.get_schema(),
                     name=method_type.endpoint_name.capitalize()
                 )
 
             param = create_parameter(
                 cls.get_endpoint_name(),
-                annotation=model_class
+                annotation=schema_class
             )
             params.append(param)
 
@@ -160,25 +160,25 @@ class MemCrudRouter(CrudRouter):
         return route
 
 
-class AlchemyCrudRouter(CrudRouter):
+# class AlchemyCrudRouter(CrudRouter):
 
-    def __init__(self, app: FastAPI, db: Session) -> None:
-        self.db_func = db
-        super().__init__(app=app)
+#     def __init__(self, app: FastAPI, db: Session) -> None:
+#         self.db_func = db
+#         super().__init__(app=app)
 
-    def _create(self, db_schema) -> Callable:
-        def route(
-            model: self.create_schema,  # type: ignore
-            db: Session = Depends(self.db_func),
-        ) -> Model:
-            try:
-                db_model: Model = db_schema(**model.dict())
-                db.add(db_model)
-                db.commit()
-                db.refresh(db_model)
-                return db_model
-            except IntegrityError:
-                db.rollback()
-                raise HTTPException(422, "Key already exists") from None
+#     def _create(self, db_schema) -> Callable:
+#         def route(
+#             model: self.create_schema,  # type: ignore
+#             db: Session = Depends(self.db_func),
+#         ) -> Model:
+#             try:
+#                 db_model: Model = db_schema(**model.dict())
+#                 db.add(db_model)
+#                 db.commit()
+#                 db.refresh(db_model)
+#                 return db_model
+#             except IntegrityError:
+#                 db.rollback()
+#                 raise HTTPException(422, "Key already exists") from None
 
-        return route
+#         return route

@@ -16,18 +16,18 @@ class PaginationParams:
         self.limit = limit
 
 
-def model_factory(model_cls: Type[T], pk_field_name: str = "id", name: str = "Create") -> Type[T]:
+def schema_factory(schema_cls: Type[T], pk_field_name: str = "id", name: str = "Create") -> Type[T]:
     """
-    Is used to create a Createmodel which does not contain pk
+    Is used to create a CreateSchema which does not contain pk
     """
 
     fields = {
         f.name: (f.type_, ...)
-        for f in model_cls.__fields__.values()
+        for f in schema_cls.__fields__.values()
         if f.name != pk_field_name
     }
 
-    name = model_cls.__name__ + name
+    name = schema_cls.__name__ + name
     model: Type[T] = create_model(__model_name=name, **fields)  # type: ignore
     return model
 

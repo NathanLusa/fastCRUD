@@ -25,5 +25,5 @@ class UserEndpoints(BaseEndpoint):
         return 'user'
 
     @staticmethod
-    def get_model() -> Type[BaseModel]:
+    def get_schema() -> Type[BaseModel]:
         return User

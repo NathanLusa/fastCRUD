@@ -13,8 +13,8 @@ class Path():
 
 
 class MethodType():
-    def __init__(self, endpoint_name: str, method_type: str, need_model: bool = False, path: Path | None = None):
+    def __init__(self, endpoint_name: str, method_type: str, need_schema: bool = False, path: Path | None = None):
         self.endpoint_name = endpoint_name
         self.method_type = method_type
-        self.need_model = need_model
+        self.need_schema = need_schema
         self.path = path

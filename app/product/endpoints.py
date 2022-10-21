@@ -17,5 +17,5 @@ class ProductEndpoints(BaseEndpoint):
         return 'product'
 
     @staticmethod
-    def get_model() -> Type[BaseModel]:
+    def get_schema() -> Type[BaseModel]:
         return Product
