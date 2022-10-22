@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from typing import Type
 
+from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+
 
 class BaseEndpoint():
 
@@ -9,8 +11,12 @@ class BaseEndpoint():
 
     @staticmethod
     def get_endpoint_name() -> str:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @staticmethod
     def get_schema() -> Type[BaseModel]:
-        raise NotImplementedError()
+        raise NotImplementedError
+
+    @staticmethod
+    def get_model() -> Type[Model]:
+        raise NotImplementedError

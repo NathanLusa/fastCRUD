@@ -3,9 +3,9 @@ from inspect import Parameter
 from typing import List, Type, Callable, Generator, Any
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
-# from sqlalchemy.orm import Session
-# from sqlalchemy.ext.declarative import DeclarativeMeta as Model
-# from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+from sqlalchemy.exc import IntegrityError
 
 # try:
 #     from sqlalchemy.orm import Session
@@ -160,25 +160,25 @@ class MemCrudRouter(CrudRouter):
         return route
 
 
-# class AlchemyCrudRouter(CrudRouter):
+class AlchemyCrudRouter(CrudRouter):
 
-#     def __init__(self, app: FastAPI, db: Session) -> None:
-#         self.db_func = db
-#         super().__init__(app=app)
+    def __init__(self, app: FastAPI, db: "Session",) -> None:
+        self.db_func = db
+        super().__init__(app=app)
 
-#     def _create(self, db_schema) -> Callable:
-#         def route(
-#             model: self.create_schema,  # type: ignore
-#             db: Session = Depends(self.db_func),
-#         ) -> Model:
-#             try:
-#                 db_model: Model = db_schema(**model.dict())
-#                 db.add(db_model)
-#                 db.commit()
-#                 db.refresh(db_model)
-#                 return db_model
-#             except IntegrityError:
-#                 db.rollback()
-#                 raise HTTPException(422, "Key already exists") from None
+    def _create(self, cls: Type[BaseEndpoint], *args, **kwargs) -> Callable:
+        def route(
+            model: self.create_schema,  # type: ignore
+            db: Session = Depends(self.db_func),
+        ) -> Model:
+            try:
+                db_model: Model = cls.get_model()(**model.dict())
+                db.add(db_model)
+                db.commit()
+                db.refresh(db_model)
+                return db_model
+            except IntegrityError:
+                db.rollback()
+                raise HTTPException(422, "Key already exists") from None
 
-#         return route
+        return route

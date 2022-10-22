@@ -1,4 +1,3 @@
-from email.policy import default
 from sqlalchemy import Boolean, Column, Integer, Float, String
 
 from app.database import Base

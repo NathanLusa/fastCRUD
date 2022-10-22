@@ -1,7 +1,11 @@
 from typing import Union, Type
 from pydantic import BaseModel
 
+from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+
 from core.endpoints import BaseEndpoint
+
+from .schemas import UserModel
 
 
 variable = 'teste'
@@ -27,3 +31,7 @@ class UserEndpoints(BaseEndpoint):
     @staticmethod
     def get_schema() -> Type[BaseModel]:
         return User
+
+    @staticmethod
+    def get_model() -> Type[Model]:
+        return UserModel
