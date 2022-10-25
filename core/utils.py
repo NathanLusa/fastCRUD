@@ -58,7 +58,7 @@ def get_path(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
     return path_name
 
 
-def create_parameter(param_name: str, annotation: Any | None = None, default=_empty) -> Parameter:
+def create_parameter(param_name: str, annotation: Any | None = None, default: Any = _empty) -> Parameter:
     return Parameter(
         param_name,
         kind=Parameter.POSITIONAL_OR_KEYWORD,
@@ -67,7 +67,7 @@ def create_parameter(param_name: str, annotation: Any | None = None, default=_em
     )
 
 
-def replace_signature(func: Callable, params: List[Parameter]):
+def replace_signature(func: Callable, params: List[Parameter]) -> None:
     sig = signature(func)
     func.__signature__ = sig.replace(  # type: ignore
         parameters=params)

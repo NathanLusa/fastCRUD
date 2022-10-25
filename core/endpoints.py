@@ -18,5 +18,5 @@ class BaseEndpoint():
         raise NotImplementedError
 
     @staticmethod
-    def get_model() -> Type[Model]:
+    def get_model() -> Model:
         raise NotImplementedError
