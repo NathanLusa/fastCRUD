@@ -1,24 +1,14 @@
-from typing import Union, Type
+from typing import Type
 from pydantic import BaseModel
 
 from app.database import Base
 from core.endpoints import BaseEndpoint
 
-from .schemas import UserModel
-
-
-class User(BaseModel):
-    id: int
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
+from .models import UserModel
+from .schemas import User
 
 
 class UserEndpoints(BaseEndpoint):
-
-    # @staticmethod
-    # def create(user: User) -> str:
-    #     return UserEndpoints.create.__module__ + '--' + variable
 
     @staticmethod
     def get_endpoint_name() -> str:

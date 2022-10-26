@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from inspect import Parameter
-from typing import List, Type, Callable, Generator, Any
+from typing import List, Optional, Type, Callable, Generator, Any
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 
@@ -22,6 +22,7 @@ from sqlalchemy.exc import IntegrityError
 #     Session = Callable[..., Generator[Session, Any, None]]
 
 
+from core._types import DEPENDENCIES, PAGINATION, PYDANTIC_SCHEMA as SCHEMA
 from core import consts
 from core.endpoints import BaseEndpoint
 from core.models import MethodType
@@ -137,12 +138,12 @@ class CrudRouter(metaclass=Singleton):
         self._make_endpoint_methods(cls)
 
 
-# class MemCrudRouter(CrudRouter):
+class MemCrudRouter(CrudRouter):
 
-#     def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any):
-#         def route(*args: Any, **kwargs: Any):
-#             return cls.__name__ + ' from route'
-#         return route
+    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any):
+        def route(*args: Any, **kwargs: Any):
+            return cls.__name__ + ' from route'
+        return route
 
 #     def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
 #         def route(*args: Any, **kwargs: Any):
@@ -167,16 +168,24 @@ class CrudRouter(metaclass=Singleton):
 
 class AlchemyCrudRouter(CrudRouter):
 
-    def __init__(self, app: FastAPI, db: Any) -> None:
+    def __init__(self,
+                 app: FastAPI,
+                 db: Any,
+                 create_schema: Optional[Type[SCHEMA]] = None,
+                 ) -> None:
         self.db_func = db
+        self.create_schema = create_schema
+
         super().__init__(app=app)
 
     def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
         def route(
             model: self.create_schema,  # type: ignore
             db: Session = Depends(self.db_func),
+            *args: Any, **kwargs: Any
         ) -> Model:
             try:
+                # model = cls.get_schema()
                 db_model: Model = cls.get_model()(**model.dict())
                 db.add(db_model)
                 db.commit()

@@ -2,8 +2,7 @@ from typing import Dict, Any
 
 from fastapi import FastAPI
 
-# , MemCrudRouter
-from core.crud_router import CrudRouter, AlchemyCrudRouter
+from core.crud_router import CrudRouter, AlchemyCrudRouter, MemCrudRouter
 from app.database import get_db
 from app.product.endpoints import ProductEndpoints
 from app.user.endpoints import UserEndpoints

@@ -1,11 +1,9 @@
-from sqlalchemy import Boolean, Column, Integer, Float, String
+from typing import Union
+from pydantic import BaseModel
 
-from app.database import Base
 
-
-class UserModel(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    price = Column(Float)
-    is_offer = Column(Boolean, default=False)
+class User(BaseModel):
+    id: int
+    name: str
+    price: float
+    is_offer: Union[bool, None] = None
