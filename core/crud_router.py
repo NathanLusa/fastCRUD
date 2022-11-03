@@ -180,12 +180,14 @@ class AlchemyCrudRouter(CrudRouter):
 
     def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
         def route(
-            model: self.create_schema,  # type: ignore
+            # model: self.create_schema,  # type: ignore
             db: Session = Depends(self.db_func),
-            *args: Any, **kwargs: Any
+            *args: Any,
+            **kwargs: Any
         ) -> Model:
             try:
-                # model = cls.get_schema()
+                model = kwargs.get(cls.get_endpoint_name())
+                print(model)
                 db_model: Model = cls.get_model()(**model.dict())
                 db.add(db_model)
                 db.commit()
