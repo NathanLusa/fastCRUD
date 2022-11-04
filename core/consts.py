@@ -1,6 +1,11 @@
 from typing import List, Type
 
+from fastapi import HTTPException
+
 from .models import MethodType, Path
+
+
+NOT_FOUND = HTTPException(404, "Item not found")
 
 CREATE: str = 'create'
 READ: str = 'read'
@@ -14,6 +19,6 @@ ENDPOINT_FUNC_TYPE_LIST: List[MethodType] = [
     MethodType(CREATE, 'POST', need_schema=True),
     # MethodType(READ, 'GET', path=Path(suffix='_id')),
     # MethodType(READ_ALL, 'GET'),
-    # MethodType(UPDATE, 'PUT', need_schema=True, path=Path(suffix='_id')),
+    MethodType(UPDATE, 'PUT', need_schema=True, path=Path(suffix='_id')),
     # MethodType(DELETE, 'DELETE', path=Path(suffix='_id')),
 ]

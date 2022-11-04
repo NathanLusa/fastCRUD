@@ -155,10 +155,10 @@ class MemCrudRouter(CrudRouter):
 #             return cls.__name__ + ' from route read all'
 #         return route
 
-#     def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-#         def route(*args: Any, **kwargs: Any):
-#             return cls.__name__ + ' from route update'
-#         return route
+    def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+        def route(*args: Any, **kwargs: Any):
+            return cls.__name__ + ' from route update'
+        return route
 
 #     def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
 #         def route(*args: Any, **kwargs: Any):
@@ -176,25 +176,42 @@ class AlchemyCrudRouter(CrudRouter):
         self.db_func = db
         self.create_schema = create_schema
 
+        # self._pk_type: type = _utils.get_pk_type(schema, self._pk)
+
         super().__init__(app=app)
 
     def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(
-            # model: self.create_schema,  # type: ignore
-            db: Session = Depends(self.db_func),
-            *args: Any,
-            **kwargs: Any
-        ) -> Model:
+        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
             try:
                 model = kwargs.get(cls.get_endpoint_name())
-                print(model)
                 db_model: Model = cls.get_model()(**model.dict())
+
+                db = next(db.dependency())
                 db.add(db_model)
                 db.commit()
                 db.refresh(db_model)
+
                 return db_model
             except IntegrityError:
                 db.rollback()
                 raise HTTPException(422, "Key already exists") from None
+
+        return route
+
+    def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
+        # def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+            item_id = 0
+            db = next(db.dependency())
+
+            model = kwargs.get(cls.get_endpoint_name())
+            db_model: Model = cls.get_model()(**model.dict())
+
+            model: Model = db.query(db_model).get(item_id)
+
+            if model:
+                return model
+            else:
+                raise consts.NOT_FOUND from None
 
         return route
