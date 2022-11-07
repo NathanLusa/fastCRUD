@@ -27,7 +27,7 @@ from core import consts
 from core.endpoints import BaseEndpoint
 from core.models import MethodType
 from core.singleton import Singleton
-from core.utils import PaginationParams, schema_factory, get_func, get_path, create_parameter, replace_signature
+from core.utils import PaginationParams, schema_factory, get_func, get_param_name, get_path, create_parameter, replace_signature
 
 
 CALLABLE = Callable[..., Model]
@@ -199,9 +199,9 @@ class AlchemyCrudRouter(CrudRouter):
         return route
 
     def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        # def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
         def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
-            item_id = 0
+            param_name = get_param_name(cls, consts.UPDATE_METHOD_TYPE)
+            item_id = kwargs.get(param_name)
             db = next(db.dependency())
 
             model = kwargs.get(cls.get_endpoint_name())

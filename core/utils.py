@@ -38,21 +38,31 @@ def get_func(cls: Type[BaseEndpoint], func_name: str) -> Callable | None:
     return func_list[0][1] if len(func_list) > 0 else None
 
 
+def get_param_name(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
+    param_name = ''
+    if method_type.path:
+        if method_type.path.name:
+            param_name = ''
+        else:
+            if method_type.path.prefix:
+                param_name += method_type.path.prefix + cls.get_endpoint_name()
+
+            if method_type.path.suffix:
+                if not method_type.path.prefix:
+                    param_name += cls.get_endpoint_name()
+                param_name += method_type.path.suffix
+
+    return param_name
+
+
 def get_path(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
     path_name = ''
     if method_type.path:
-        path_name = '/{'
-        if method_type.path.prefix:
-            path_name += method_type.path.prefix + cls.get_endpoint_name()
-
-        if method_type.path.suffix:
-            if not method_type.path.prefix:
-                path_name += cls.get_endpoint_name()
-            path_name += method_type.path.suffix
-
         if method_type.path.name:
             path_name = f'/{method_type.path.name}'
         else:
+            path_name = '/{'
+            path_name += get_param_name(cls, method_type)
             path_name += '}'
 
     return path_name
