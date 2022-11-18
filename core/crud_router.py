@@ -145,25 +145,25 @@ class MemCrudRouter(CrudRouter):
             return cls.__name__ + ' from route'
         return route
 
-#     def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-#         def route(*args: Any, **kwargs: Any):
-#             return cls.__name__ + ' from route read'
-#         return route
+    def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+        def route(*args: Any, **kwargs: Any):
+            return cls.__name__ + ' from route read'
+        return route
 
-#     def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-#         def route(*args: Any, **kwargs: Any):
-#             return cls.__name__ + ' from route read all'
-#         return route
+    def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+        def route(*args: Any, **kwargs: Any):
+            return cls.__name__ + ' from route read all'
+        return route
 
     def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
         def route(*args: Any, **kwargs: Any):
             return cls.__name__ + ' from route update'
         return route
 
-#     def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-#         def route(*args: Any, **kwargs: Any):
-#             return cls.__name__ + ' from route delete'
-#         return route
+    def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+        def route(*args: Any, **kwargs: Any):
+            return cls.__name__ + ' from route delete'
+        return route
 
 
 class AlchemyCrudRouter(CrudRouter):
@@ -198,9 +198,48 @@ class AlchemyCrudRouter(CrudRouter):
 
         return route
 
+    def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
+        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+            param_name = get_param_name(
+                cls, consts.METHOD_TYPE_LIST[consts.READ])
+            item_id = kwargs.get(param_name)
+            db = next(db.dependency())
+            db_model: Model = cls.get_model()(**model.dict())
+
+            model: Model = db.query(db_model).get(item_id)
+
+            if model:
+                return model
+            else:
+                raise consts.NOT_FOUND from None
+        return route
+
+    def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func),
+            # pagination: PAGINATION = self.pagination,
+            *args: Any, **kwargs: Any
+        ) -> Model:
+            # skip, limit = pagination.get("skip"), pagination.get("limit")
+            model = kwargs.get(cls.get_endpoint_name())
+            db = next(db.dependency())
+            db_model: Model = cls.get_model()(**model.dict())
+
+            db_models: List[Model] = (
+                db.query(self.db_model)
+                .order_by(getattr(self.db_model, self._pk))
+                # .limit(limit)
+                # .offset(skip)
+                .all()
+            )
+            return db_models
+
+        return route
+
     def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
         def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
-            param_name = get_param_name(cls, consts.UPDATE_METHOD_TYPE)
+            param_name = get_param_name(
+                cls, consts.METHOD_TYPE_LIST[consts.UPDATE])
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
 
@@ -213,5 +252,21 @@ class AlchemyCrudRouter(CrudRouter):
                 return model
             else:
                 raise consts.NOT_FOUND from None
+
+        return route
+
+    def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
+        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+            param_name = get_param_name(
+                cls, consts.METHOD_TYPE_LIST[consts.DELETE])
+            item_id = kwargs.get(param_name)
+            db = next(db.dependency())
+
+            db_model: Model = db.query(self.db_model).get(item_id)
+            # db_model: Model = self._read(cls, param_name=item_id)(item_id, db)
+            db.delete(db_model)
+            db.commit()
+
+            return db_model
 
         return route
