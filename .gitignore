@@ -175,4 +175,7 @@ cython_debug/
 pyvenv.cfg
 pip-selfcheck.json
 
+# Database
+*.db
+
 # End of https://www.toptal.com/developers/gitignore/api/venv,python

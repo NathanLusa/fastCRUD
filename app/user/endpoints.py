@@ -21,3 +21,6 @@ class UserEndpoints(BaseEndpoint):
     @staticmethod
     def get_model() -> Type[Base]:
         return UserModel
+
+    # def read(user_id: int):
+        # return {}

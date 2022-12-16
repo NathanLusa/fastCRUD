@@ -1,4 +1,4 @@
-from inspect import getmembers, isfunction, ismethod, signature, Parameter, _empty
+from inspect import getmembers, isfunction, ismethod, signature, Parameter, _empty, _ParameterKind
 from typing import Any, Callable, List, Type, TypeVar
 
 from pydantic import BaseModel, create_model
@@ -68,10 +68,10 @@ def get_path(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
     return path_name
 
 
-def create_parameter(param_name: str, annotation: Any | None = None, default: Any = _empty) -> Parameter:
+def create_parameter(param_name: str, annotation: Any | None = None, kind: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD, default: Any = _empty) -> Parameter:
     return Parameter(
         param_name,
-        kind=Parameter.POSITIONAL_OR_KEYWORD,
+        kind=kind,
         annotation=annotation,
         default=default
     )

@@ -3,7 +3,7 @@ from typing import Dict, Any
 from fastapi import FastAPI
 
 from core.crud_router import CrudRouter, AlchemyCrudRouter, MemCrudRouter
-from app.database import get_db
+from app.database import get_db, Base, engine
 from app.product.endpoints import ProductEndpoints
 from app.user.endpoints import UserEndpoints
 
@@ -17,6 +17,8 @@ router.add_class(UserEndpoints)
 # router = MemCrudRouter(app)
 # router.add_class(UserEndpoints)
 # router.add_class(ProductEndpoints)
+
+Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")

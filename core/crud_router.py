@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from inspect import Parameter
+from inspect import Parameter, signature, _POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD, _VAR_POSITIONAL, _KEYWORD_ONLY, _VAR_KEYWORD
+
 from typing import List, Optional, Type, Callable, Generator, Any
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
@@ -97,6 +98,13 @@ class CrudRouter(metaclass=Singleton):
             param = create_parameter(
                 cls.get_endpoint_name(),
                 annotation=schema_class
+            )
+            params.append(param)
+
+        if method_type.path:
+            param = create_parameter(
+                get_param_name(cls, method_type),
+                annotation=int
             )
             params.append(param)
 
@@ -204,7 +212,7 @@ class AlchemyCrudRouter(CrudRouter):
                 cls, consts.METHOD_TYPE_LIST[consts.READ])
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
-            db_model: Model = cls.get_model()(**model.dict())
+            db_model: Model = cls.get_model()
 
             model: Model = db.query(db_model).get(item_id)
 
@@ -215,21 +223,18 @@ class AlchemyCrudRouter(CrudRouter):
         return route
 
     def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(
-            db: Session = Depends(self.db_func),
-            # pagination: PAGINATION = self.pagination,
-            *args: Any, **kwargs: Any
-        ) -> Model:
-            # skip, limit = pagination.get("skip"), pagination.get("limit")
-            model = kwargs.get(cls.get_endpoint_name())
+        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+            pagination: PaginationParams = kwargs.get('pagination')
+            skip, limit = pagination.skip, pagination.limit
+
             db = next(db.dependency())
-            db_model: Model = cls.get_model()(**model.dict())
+            db_model: Model = cls.get_model()
 
             db_models: List[Model] = (
-                db.query(self.db_model)
-                .order_by(getattr(self.db_model, self._pk))
-                # .limit(limit)
-                # .offset(skip)
+                db.query(db_model)
+                # .order_by(getattr(db_model, self._pk))
+                .limit(limit)
+                .offset(skip)
                 .all()
             )
             return db_models
@@ -242,16 +247,25 @@ class AlchemyCrudRouter(CrudRouter):
                 cls, consts.METHOD_TYPE_LIST[consts.UPDATE])
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
+            db_model: Model = cls.get_model()
 
-            model = kwargs.get(cls.get_endpoint_name())
-            db_model: Model = cls.get_model()(**model.dict())
+            actual_model: Model = db.query(db_model).get(item_id)
+            client_model = kwargs.get(cls.get_endpoint_name())
 
-            model: Model = db.query(db_model).get(item_id)
+            try:
+                for key, value in client_model.dict(exclude={'id'}).items():
+                    if hasattr(actual_model, key):
+                        setattr(actual_model, key, value)
 
-            if model:
-                return model
-            else:
-                raise consts.NOT_FOUND from None
+                db.commit()
+                db.refresh(actual_model)
+
+                return actual_model
+            except IntegrityError as e:
+                db.rollback()
+                self._raise(e)
+
+        return route
 
         return route
 
@@ -263,7 +277,6 @@ class AlchemyCrudRouter(CrudRouter):
             db = next(db.dependency())
 
             db_model: Model = db.query(self.db_model).get(item_id)
-            # db_model: Model = self._read(cls, param_name=item_id)(item_id, db)
             db.delete(db_model)
             db.commit()
 
