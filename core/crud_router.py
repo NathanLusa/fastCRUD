@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from inspect import Parameter, signature, _POSITIONAL_ONLY, _POSITIONAL_OR_KEYWORD, _VAR_POSITIONAL, _KEYWORD_ONLY, _VAR_KEYWORD
+from inspect import Parameter
 
 from typing import List, Optional, Type, Callable, Generator, Any
 
@@ -267,8 +267,6 @@ class AlchemyCrudRouter(CrudRouter):
 
         return route
 
-        return route
-
     def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
         def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
             param_name = get_param_name(
@@ -276,10 +274,11 @@ class AlchemyCrudRouter(CrudRouter):
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
 
-            db_model: Model = db.query(self.db_model).get(item_id)
-            db.delete(db_model)
+            db_model: Model = cls.get_model()
+            delete_model: Model = db.query(db_model).get(item_id)
+            db.delete(delete_model)
             db.commit()
 
-            return db_model
+            return delete_model
 
         return route
