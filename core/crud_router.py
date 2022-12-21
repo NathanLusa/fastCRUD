@@ -252,6 +252,9 @@ class AlchemyCrudRouter(CrudRouter):
             actual_model: Model = db.query(db_model).get(item_id)
             client_model = kwargs.get(cls.get_endpoint_name())
 
+            if not actual_model:
+                raise consts.NOT_FOUND from None
+
             try:
                 for key, value in client_model.dict(exclude={'id'}).items():
                     if hasattr(actual_model, key):
@@ -276,9 +279,12 @@ class AlchemyCrudRouter(CrudRouter):
 
             db_model: Model = cls.get_model()
             delete_model: Model = db.query(db_model).get(item_id)
-            db.delete(delete_model)
-            db.commit()
 
-            return delete_model
+            if delete_model:
+                db.delete(delete_model)
+                db.commit()
+                return delete_model
+            else:
+                raise consts.NOT_FOUND from None
 
         return route
