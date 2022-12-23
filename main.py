@@ -4,8 +4,8 @@ from fastapi import FastAPI
 
 from core.crud_router import CrudRouter, AlchemyCrudRouter, MemCrudRouter
 from app.database import get_db, Base, engine
-from app.product.endpoints import ProductEndpoints
-from app.user.endpoints import UserEndpoints
+from app.endpoints.product import ProductEndpoints
+from app.endpoints.user import UserEndpoints
 
 
 app = FastAPI()

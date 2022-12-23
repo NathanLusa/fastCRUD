@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from app.database import Base
 from core.endpoints import BaseEndpoint
 
-from .models import UserModel
-from .schemas import User
+from ..models.user import UserModel
+from ..schemas.user import User
 
 
 class UserEndpoints(BaseEndpoint):
