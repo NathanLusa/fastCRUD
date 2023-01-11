@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from inspect import Parameter
+from datetime import datetime, timezone
 
 from typing import List, Optional, Type, Callable, Generator, Any
 
@@ -192,7 +193,14 @@ class AlchemyCrudRouter(CrudRouter):
         def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
             try:
                 model = kwargs.get(cls.get_endpoint_name())
-                db_model: Model = cls.get_model()(**model.dict())
+                db_model: Model = cls.get_model()()  # (**model.dict())
+
+                if hasattr(db_model, 'created_at'):
+                    setattr(db_model, 'created_at', datetime.now(timezone.utc))
+                # breakpoint()
+                for key, value in model.dict().items():
+                    if hasattr(db_model, key):
+                        setattr(db_model, key, value)
 
                 db = next(db.dependency())
                 db.add(db_model)
@@ -259,6 +267,9 @@ class AlchemyCrudRouter(CrudRouter):
                 for key, value in client_model.dict(exclude={'id'}).items():
                     if hasattr(actual_model, key):
                         setattr(actual_model, key, value)
+
+                if hasattr(db_model, 'updated_at'):
+                    setattr(db_model, 'updated_at', datetime.now(timezone.utc))
 
                 db.commit()
                 db.refresh(actual_model)
