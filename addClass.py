@@ -5,8 +5,8 @@ from sqlalchemy import types
 
 
 FILES_PATH = '_teste/_FILES'
-BASE_PATH = '_teste'
-# BASE_PATH = 'app'
+# BASE_PATH = '_teste'
+BASE_PATH = 'app'
 ENDPOINT_PATH = f'{BASE_PATH}/endpoints'
 SCHEMA_PATH = f'{BASE_PATH}/schemas'
 MODEL_PATH = f'{BASE_PATH}/models'

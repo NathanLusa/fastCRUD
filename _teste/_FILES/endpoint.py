@@ -8,7 +8,7 @@ from ..models.[class_min] import [class]Model
 from ..schemas.[class_min] import [class]
 
 
-class AccountEndpoints(BaseEndpoint):
+class [class]Endpoints(BaseEndpoint):
 
     @staticmethod
     def get_endpoint_name() -> str:
