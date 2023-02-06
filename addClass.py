@@ -58,12 +58,15 @@ def get_python_type(python_type):
                 f'{python_type} is not a supported Python built-in type')
 
 
-def change_class(file, class_name):
+def change_class(file, class_name, list_changes=[]):
     with open(file, 'r') as f:
         text = f.read()
 
     text = text.replace('[class]', class_name)
     text = text.replace('[class_min]', class_name.lower())
+
+    for change in list_changes:
+        text = text.replace(change['name'], change['value'])
 
     with open(file, 'w') as f:
         f.write(text)
@@ -72,10 +75,8 @@ def change_class(file, class_name):
 def add_schema(class_name: str, fields: list[dict[str, str]]):
     destination_file = f'{SCHEMA_PATH}/{class_name.lower()}.py'
     shutil.copy(f'{FILES_PATH}/schema.py', destination_file)
-    change_class(destination_file, class_name)
 
     fields_str = ''
-
     for field in fields:
         name = field['name']
         field_type = get_python_type(field['type'])
@@ -83,24 +84,16 @@ def add_schema(class_name: str, fields: list[dict[str, str]]):
         fields_str += '    ' if fields_str != '' else ''
         fields_str += f'{name}: {field_type}\n'
 
-    # Write file
-    with open(destination_file, 'r') as f:
-        text = f.read()
-
-    text = text.replace('[fields]', fields_str)
-
-    with open(destination_file, 'w') as f:
-        f.write(text)
+    change_class(destination_file, class_name,
+                 [{'name': '[fields]', 'value': fields_str}])
 
 
 def add_model(class_name: str, fields: list[dict[str, str]]):
     destination_file = f'{MODEL_PATH}/{class_name.lower()}.py'
     shutil.copy(f'{FILES_PATH}/model.py', destination_file)
-    change_class(destination_file, class_name)
 
     fields_str = ''
     field_type_import = set()
-
     for field in fields:
         name = field['name']
         field_type = get_sqlalchemy_type(field['type'])
@@ -110,20 +103,13 @@ def add_model(class_name: str, fields: list[dict[str, str]]):
         fields_str += '    ' if fields_str != '' else ''
         fields_str += f'{name} = Column({field_type})\n'
 
-    # Write file
-    with open(destination_file, 'r') as f:
-        text = f.read()
-
-    text = text.replace('[fields]', fields_str)
-
     field_type_import_str = ''
     for x in field_type_import:
         field_type_import_str += f', {x}'
 
-    text = text.replace('[fields_import]', field_type_import_str)
-
-    with open(destination_file, 'w') as f:
-        f.write(text)
+    change_class(destination_file, class_name
+                 [{'name': '[fields]', 'value': fields_str},
+                  {'name': '[fields_import]', 'value': field_type_import_str}])
 
 
 def add_endpoint(class_name: str):
