@@ -1,12 +1,14 @@
 import shutil
 import sys
 
+from classes import CreateClass
+
 from sqlalchemy import types
 
 
 FILES_PATH = '_teste/_FILES'
-# BASE_PATH = '_teste'
-BASE_PATH = 'app'
+BASE_PATH = '_teste'
+# BASE_PATH = 'app'
 ENDPOINT_PATH = f'{BASE_PATH}/endpoints'
 SCHEMA_PATH = f'{BASE_PATH}/schemas'
 MODEL_PATH = f'{BASE_PATH}/models'
@@ -58,79 +60,50 @@ def get_python_type(python_type):
                 f'{python_type} is not a supported Python built-in type')
 
 
-def change_class(file, class_name, list_changes=[]):
+def replace_text(file: str, replate_method):
     with open(file, 'r') as f:
         text = f.read()
 
-    text = text.replace('[class]', class_name)
-    text = text.replace('[class_min]', class_name.lower())
-
-    for change in list_changes:
-        text = text.replace(change['name'], change['value'])
+    text = replate_method(text)
 
     with open(file, 'w') as f:
         f.write(text)
 
 
-def add_schema(class_name: str, fields: list[dict[str, str]]):
+def add_schema(class_name: str, create_class: CreateClass):
     destination_file = f'{SCHEMA_PATH}/{class_name.lower()}.py'
-    shutil.copy(f'{FILES_PATH}/schema.py', destination_file)
+    shutil.copy(f'{FILES_PATH}/schema.pyt', destination_file)
 
-    fields_str = ''
-    for field in fields:
-        name = field['name']
-        field_type = get_python_type(field['type'])
-
-        fields_str += '    ' if fields_str != '' else ''
-        fields_str += f'{name}: {field_type}\n'
-
-    change_class(destination_file, class_name,
-                 [{'name': '[fields]', 'value': fields_str}])
+    replace_text(destination_file, create_class.replace_schema_template)
 
 
-def add_model(class_name: str, fields: list[dict[str, str]]):
+def add_model(class_name: str, create_class: CreateClass):
     destination_file = f'{MODEL_PATH}/{class_name.lower()}.py'
-    shutil.copy(f'{FILES_PATH}/model.py', destination_file)
+    shutil.copy(f'{FILES_PATH}/model.pyt', destination_file)
 
-    fields_str = ''
-    field_type_import = set()
-    for field in fields:
-        name = field['name']
-        field_type = get_sqlalchemy_type(field['type'])
-
-        field_type_import.add(field_type)
-
-        fields_str += '    ' if fields_str != '' else ''
-        fields_str += f'{name} = Column({field_type})\n'
-
-    field_type_import_str = ''
-    for x in field_type_import:
-        field_type_import_str += f', {x}'
-
-    change_class(destination_file, class_name
-                 [{'name': '[fields]', 'value': fields_str},
-                  {'name': '[fields_import]', 'value': field_type_import_str}])
+    replace_text(destination_file, create_class.replace_model_template)
 
 
-def add_endpoint(class_name: str):
+def add_endpoint(class_name: str, create_class: CreateClass):
     destination_file = f'{ENDPOINT_PATH}/{class_name.lower()}.py'
-    shutil.copy(f'{FILES_PATH}/endpoint.py', destination_file)
-    change_class(destination_file, class_name)
+    shutil.copy(f'{FILES_PATH}/endpoint.pyt', destination_file)
+
+    replace_text(destination_file, create_class.replace_endpoint_template)
 
 
 def main(class_name: str, fields: list[dict[str, str]]):
-    add_endpoint(class_name)
-    add_model(class_name, fields)
-    add_schema(class_name, fields)
+    create_class = CreateClass(name=class_name.lower())
+    for field in fields:
+        create_class.add_field(field['name'], field['type'])
 
+    add_endpoint(class_name, create_class)
+    add_model(class_name, create_class)
+    add_schema(class_name, create_class)
 
-# class_name = sys.argv[1]
 
 class_name, *fields = sys.argv[1:]
 
 fields = [{'name': y[0], 'type': y[1], }
           for y in [x.split(':') for x in fields]]
-
-print(class_name, fields)
 
 main(class_name, fields)
