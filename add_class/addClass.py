@@ -14,52 +14,6 @@ SCHEMA_PATH = f'{BASE_PATH}/schemas'
 MODEL_PATH = f'{BASE_PATH}/models'
 
 
-def get_sqlalchemy_type(python_type):
-    match python_type:
-        case 'int':
-            return 'Integer'
-        case 'str' | 'string':
-            return 'String'
-        case 'bool' | 'boolean':
-            return 'Boolean'
-        case 'float' | 'currency':
-            return 'Float'
-        case 'enum':
-            return 'Enum'
-        case 'date':
-            return 'Date'
-        case 'datetime':
-            return 'Datetime'
-        case 'time':
-            return 'Time'
-        case _:
-            raise ValueError(
-                f'{python_type} is not a supported Python built-in type')
-
-
-def get_python_type(python_type):
-    match python_type:
-        case 'int':
-            return 'int'
-        case 'str' | 'string':
-            return 'str'
-        case 'bool' | 'boolean':
-            return 'bool'
-        case 'float' | 'currency':
-            return 'float'
-        case 'enum':
-            return 'Enum'
-        case 'date':
-            return 'Date'
-        case 'datetime':
-            return 'Datetime'
-        case 'time':
-            return 'Time'
-        case _:
-            raise ValueError(
-                f'{python_type} is not a supported Python built-in type')
-
-
 def replace_text(file: str, replate_method):
     with open(file, 'r') as f:
         text = f.read()
@@ -101,9 +55,11 @@ def main(class_name: str, fields: list[dict[str, str]]):
     add_schema(class_name, create_class)
 
 
-class_name, *fields = sys.argv[1:]
+if __name__ == '__main__':
+    ''
+    class_name, *fields = sys.argv[1:]
 
-fields = [{'name': y[0], 'type': y[1], }
-          for y in [x.split(':') for x in fields]]
+    fields = [{'name': y[0], 'type': y[1], }
+              for y in [x.split(':') for x in fields]]
 
-main(class_name, fields)
+    main(class_name, fields)
