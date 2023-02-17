@@ -74,5 +74,6 @@ class CreateClass:
 
         text = text.replace('[fields]', fields_str)
         text = text.replace('[fields_import]', field_type_import_str)
+        text = text.replace('[base_class]', 'Base')
 
         return text

@@ -1,9 +1,8 @@
-from app.database import Base
-
+from app.database import [base_class]
 [fields_import]
 
 
-class [class]Model(Base):
-    __tablename__ = '[class_min]'
+class [class]Model([base_class]):
+
 
 [fields]
