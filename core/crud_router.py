@@ -149,28 +149,28 @@ class CrudRouter(metaclass=Singleton):
 
 class MemCrudRouter(CrudRouter):
 
-    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any):
-        def route(*args: Any, **kwargs: Any):
+    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+        def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route'
         return route
 
     def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-        def route(*args: Any, **kwargs: Any):
+        def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route read'
         return route
 
     def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-        def route(*args: Any, **kwargs: Any):
+        def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route read all'
         return route
 
     def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-        def route(*args: Any, **kwargs: Any):
+        def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route update'
         return route
 
     def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
-        def route(*args: Any, **kwargs: Any):
+        def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route delete'
         return route
 

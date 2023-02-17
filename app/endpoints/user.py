@@ -1,7 +1,7 @@
 from typing import Type
 from pydantic import BaseModel
 
-from app.database import Base
+from app.database import Base, BaseModels
 from core.endpoints import BaseEndpoint
 
 from ..models.user import UserModel
@@ -19,7 +19,7 @@ class UserEndpoints(BaseEndpoint):
         return User
 
     @staticmethod
-    def get_model() -> Type[Base]:
+    def get_model() -> Type[BaseModels]:
         return UserModel
 
     # def read(user_id: int):

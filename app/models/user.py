@@ -1,10 +1,10 @@
-from sqlalchemy import Boolean, Column, Integer, Float, String
+from sqlalchemy import Boolean, Column, Float, String
 
-from app.database import Base
+from app.database import BaseStatus
 
 
-class UserModel(Base):
-    __tablename__ = 'users'
+class UserModel(BaseStatus):
+    # __tablename__ = 'users'
 
     name = Column(String)
     price = Column(Float)
