@@ -1,14 +1,28 @@
 from abc import ABC, abstractmethod
-from inspect import Parameter
 from datetime import datetime, timezone
-
-from typing import List, Optional, Type, Callable, Generator, Any
+from inspect import Parameter
+from typing import Any, Callable, Generator, List, Optional, Type
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
-
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.declarative import DeclarativeMeta as Model
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.declarative import DeclarativeMeta as Model
+from sqlalchemy.orm import Session
+
+from core import consts
+from core._types import DEPENDENCIES, PAGINATION
+from core._types import PYDANTIC_SCHEMA as SCHEMA
+from core.endpoints import BaseEndpoint
+from core.models import MethodType
+from core.singleton import Singleton
+from core.utils import (
+    PaginationParams,
+    create_parameter,
+    get_func,
+    get_param_name,
+    get_path,
+    replace_signature,
+    schema_factory,
+)
 
 # try:
 #     from sqlalchemy.orm import Session
@@ -24,14 +38,6 @@ from sqlalchemy.exc import IntegrityError
 #     Session = Callable[..., Generator[Session, Any, None]]
 
 
-from core._types import DEPENDENCIES, PAGINATION, PYDANTIC_SCHEMA as SCHEMA
-from core import consts
-from core.endpoints import BaseEndpoint
-from core.models import MethodType
-from core.singleton import Singleton
-from core.utils import PaginationParams, schema_factory, get_func, get_param_name, get_path, create_parameter, replace_signature
-
-
 CALLABLE = Callable[..., Model]
 CALLABLE_LIST = Callable[..., List[Model]]
 
@@ -43,26 +49,38 @@ class CrudRouter(metaclass=Singleton):
         self.app: FastAPI = app
 
     @abstractmethod
-    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _create(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         raise NotImplementedError
 
     # @abstractmethod
-    def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _read(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         raise NotImplementedError
 
     # @abstractmethod
-    def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _read_all(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         raise NotImplementedError
 
     # @abstractmethod
-    def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _update(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         raise NotImplementedError
 
     # @abstractmethod
-    def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _delete(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         raise NotImplementedError
 
-    def _factory(self, method_type: MethodType, cls: Type[BaseEndpoint]) -> Callable:
+    def _factory(
+        self, method_type: MethodType, cls: Type[BaseEndpoint]
+    ) -> Callable:
         params: List[Parameter] = []
         match method_type.endpoint_name:
             case consts.CREATE:
@@ -74,8 +92,7 @@ class CrudRouter(metaclass=Singleton):
             case consts.READ_ALL:
                 endpoint_func = self._read_all(cls)
                 param = create_parameter(
-                    'pagination',
-                    default=Depends(PaginationParams)
+                    'pagination', default=Depends(PaginationParams)
                 )
                 params.append(param)
 
@@ -93,19 +110,17 @@ class CrudRouter(metaclass=Singleton):
             if method_type.endpoint_name == consts.CREATE:
                 schema_class = schema_factory(
                     cls.get_schema(),
-                    name=method_type.endpoint_name.capitalize()
+                    name=method_type.endpoint_name.capitalize(),
                 )
 
             param = create_parameter(
-                cls.get_endpoint_name(),
-                annotation=schema_class
+                cls.get_endpoint_name(), annotation=schema_class
             )
             params.append(param)
 
         if method_type.path:
             param = create_parameter(
-                get_param_name(cls, method_type),
-                annotation=int
+                get_param_name(cls, method_type), annotation=int
             )
             params.append(param)
 
@@ -116,7 +131,7 @@ class CrudRouter(metaclass=Singleton):
     def _make_endpoint_methods(self, cls: Type[BaseEndpoint]) -> None:
         router = APIRouter(
             prefix=f'/{cls.get_endpoint_name()}',
-            tags=[cls.get_endpoint_name().capitalize()]
+            tags=[cls.get_endpoint_name().capitalize()],
         )
 
         # Percorre os tipos de métodos padrões (create, read, update, delete)
@@ -139,6 +154,13 @@ class CrudRouter(metaclass=Singleton):
                 methods=[method_type.method_type],
             )
 
+        # for endpoint_func in cls.get_endpoint_list():
+        #     router.add_api_route(
+        #         path='/{user_id}/' + endpoint_func.__name__,
+        #         endpoint=endpoint_func,
+        #         methods=['GET']
+        #     )
+
         # Adiciona o router no app
         self.app.include_router(router)
 
@@ -148,40 +170,54 @@ class CrudRouter(metaclass=Singleton):
 
 
 class MemCrudRouter(CrudRouter):
-
-    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _create(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route'
+
         return route
 
-    def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _read(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route read'
+
         return route
 
-    def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _read_all(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route read all'
+
         return route
 
-    def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _update(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route update'
+
         return route
 
-    def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> Callable:
+    def _delete(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> Callable:
         def route(*args: Any, **kwargs: Any) -> str:
             return cls.__name__ + ' from route delete'
+
         return route
 
 
 class AlchemyCrudRouter(CrudRouter):
-
-    def __init__(self,
-                 app: FastAPI,
-                 db: Any,
-                 create_schema: Optional[Type[SCHEMA]] = None,
-                 ) -> None:
+    def __init__(
+        self,
+        app: FastAPI,
+        db: Any,
+        create_schema: Optional[Type[SCHEMA]] = None,
+    ) -> None:
         self.db_func = db
         self.create_schema = create_schema
 
@@ -189,8 +225,12 @@ class AlchemyCrudRouter(CrudRouter):
 
         super().__init__(app=app)
 
-    def _create(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+    def _create(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
+        ) -> Model:
             try:
                 model = kwargs.get(cls.get_endpoint_name())
                 db_model: Model = cls.get_model()()  # (**model.dict())
@@ -210,14 +250,19 @@ class AlchemyCrudRouter(CrudRouter):
                 return db_model
             except IntegrityError:
                 db.rollback()
-                raise HTTPException(422, "Key already exists") from None
+                raise HTTPException(422, 'Key already exists') from None
 
         return route
 
-    def _read(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+    def _read(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
+        ) -> Model:
             param_name = get_param_name(
-                cls, consts.METHOD_TYPE_LIST[consts.READ])
+                cls, consts.METHOD_TYPE_LIST[consts.READ]
+            )
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
             db_model: Model = cls.get_model()
@@ -228,10 +273,15 @@ class AlchemyCrudRouter(CrudRouter):
                 return model
             else:
                 raise consts.NOT_FOUND from None
+
         return route
 
-    def _read_all(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+    def _read_all(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
+        ) -> Model:
             pagination: PaginationParams = kwargs.get('pagination')
             skip, limit = pagination.skip, pagination.limit
 
@@ -249,10 +299,15 @@ class AlchemyCrudRouter(CrudRouter):
 
         return route
 
-    def _update(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+    def _update(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
+        ) -> Model:
             param_name = get_param_name(
-                cls, consts.METHOD_TYPE_LIST[consts.UPDATE])
+                cls, consts.METHOD_TYPE_LIST[consts.UPDATE]
+            )
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
             db_model: Model = cls.get_model()
@@ -281,10 +336,15 @@ class AlchemyCrudRouter(CrudRouter):
 
         return route
 
-    def _delete(self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any) -> CALLABLE:
-        def route(db: Session = Depends(self.db_func), *args: Any, **kwargs: Any) -> Model:
+    def _delete(
+        self, cls: Type[BaseEndpoint], *args: Any, **kwargs: Any
+    ) -> CALLABLE:
+        def route(
+            db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
+        ) -> Model:
             param_name = get_param_name(
-                cls, consts.METHOD_TYPE_LIST[consts.DELETE])
+                cls, consts.METHOD_TYPE_LIST[consts.DELETE]
+            )
             item_id = kwargs.get(param_name)
             db = next(db.dependency())
 

@@ -1,4 +1,5 @@
 from typing import Type
+
 from pydantic import BaseModel
 
 from app.database import Base, BaseModels
@@ -9,7 +10,6 @@ from ..schemas.account import Account
 
 
 class AccountEndpoints(BaseEndpoint):
-
     @staticmethod
     def get_endpoint_name() -> str:
         return 'account'
@@ -23,4 +23,4 @@ class AccountEndpoints(BaseEndpoint):
         return AccountModel
 
     # def read(user_id: int):
-        # return {}
+    # return {}

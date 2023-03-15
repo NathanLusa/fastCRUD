@@ -1,11 +1,10 @@
-from pydantic import BaseModel
-from typing import Type
+from typing import List, Type
 
+from pydantic import BaseModel
 from sqlalchemy.ext.declarative import DeclarativeMeta as Model
 
 
-class BaseEndpoint():
-
+class BaseEndpoint:
     def __init__(self) -> None:
         pass
 
@@ -20,3 +19,7 @@ class BaseEndpoint():
     @staticmethod
     def get_model() -> Model:
         raise NotImplementedError
+
+    @staticmethod
+    def get_endpoint_list() -> List[callable]:
+        return []

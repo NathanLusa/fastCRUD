@@ -60,7 +60,7 @@ class EnumField(FieldType):
     model_type = 'Enum'
 
 
-class Field():
+class Field:
     _FIELD_TYPES = {
         'int': IntField,
         'integer': IntField,
@@ -86,7 +86,8 @@ class Field():
     def _get_field_type(self):
         if not self.field_type.lower() in self._FIELD_TYPES:
             raise ValueError(
-                f'{self.field_type} is not a supported Python built-in type >> {self.name}')
+                f'{self.field_type} is not a supported Python built-in type >> {self.name}'
+            )
 
         return self._FIELD_TYPES[self.field_type.lower()]
 

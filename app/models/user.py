@@ -4,7 +4,7 @@ from app.database import BaseStatus
 
 
 class UserModel(BaseStatus):
-    # __tablename__ = 'users'
+    __tablename__ = 'users'
 
     name = Column(String)
     price = Column(Float)

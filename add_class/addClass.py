@@ -2,9 +2,7 @@ import shutil
 import sys
 
 from classes import CreateClass
-
 from sqlalchemy import types
-
 
 FILES_PATH = '_teste/_FILES'
 BASE_PATH = '_teste'
@@ -56,10 +54,15 @@ def main(class_name: str, fields: list[dict[str, str]]):
 
 
 if __name__ == '__main__':
-    ''
+    """"""
     class_name, *fields = sys.argv[1:]
 
-    fields = [{'name': y[0], 'type': y[1], }
-              for y in [x.split(':') for x in fields]]
+    fields = [
+        {
+            'name': y[0],
+            'type': y[1],
+        }
+        for y in [x.split(':') for x in fields]
+    ]
 
     main(class_name, fields)

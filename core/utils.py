@@ -1,4 +1,12 @@
-from inspect import getmembers, isfunction, ismethod, signature, Parameter, _empty, _ParameterKind
+from inspect import (
+    Parameter,
+    _empty,
+    _ParameterKind,
+    getmembers,
+    isfunction,
+    ismethod,
+    signature,
+)
 from typing import Any, Callable, List, Type, TypeVar
 
 from pydantic import BaseModel, create_model
@@ -6,8 +14,7 @@ from pydantic import BaseModel, create_model
 from core.endpoints import BaseEndpoint
 from core.models import MethodType
 
-
-T = TypeVar("T", bound=BaseModel)
+T = TypeVar('T', bound=BaseModel)
 
 
 class PaginationParams:
@@ -16,7 +23,9 @@ class PaginationParams:
         self.limit = limit
 
 
-def schema_factory(schema_cls: Type[T], pk_field_name: str = "id", name: str = "Create") -> Type[T]:
+def schema_factory(
+    schema_cls: Type[T], pk_field_name: str = 'id', name: str = 'Create'
+) -> Type[T]:
     """
     Is used to create a CreateSchema which does not contain pk
     """
@@ -33,8 +42,10 @@ def schema_factory(schema_cls: Type[T], pk_field_name: str = "id", name: str = "
 
 
 def get_func(cls: Type[BaseEndpoint], func_name: str) -> Callable | None:
-    func_list = getmembers(cls, lambda x: (isfunction(x) or ismethod(x)) and
-                           (x.__name__ == func_name))
+    func_list = getmembers(
+        cls,
+        lambda x: (isfunction(x) or ismethod(x)) and (x.__name__ == func_name),
+    )
     return func_list[0][1] if len(func_list) > 0 else None
 
 
@@ -68,16 +79,17 @@ def get_path(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
     return path_name
 
 
-def create_parameter(param_name: str, annotation: Any | None = None, kind: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD, default: Any = _empty) -> Parameter:
+def create_parameter(
+    param_name: str,
+    annotation: Any | None = None,
+    kind: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD,
+    default: Any = _empty,
+) -> Parameter:
     return Parameter(
-        param_name,
-        kind=kind,
-        annotation=annotation,
-        default=default
+        param_name, kind=kind, annotation=annotation, default=default
     )
 
 
 def replace_signature(func: Callable, params: List[Parameter]) -> None:
     sig = signature(func)
-    func.__signature__ = sig.replace(  # type: ignore
-        parameters=params)
+    func.__signature__ = sig.replace(parameters=params)  # type: ignore

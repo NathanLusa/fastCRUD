@@ -1,11 +1,11 @@
-from sqlalchemy import Boolean, Column, Integer, Float, String, Enum, UniqueConstraint
+from sqlalchemy import Boolean, Column, Enum, Float, Integer, String, UniqueConstraint
 
 from app.database import BaseStatus
-from app.enums import AccountTypeEnum, AccountStatusEnum
+from app.enums import AccountStatusEnum, AccountTypeEnum
 
 
 class AccountModel(BaseStatus):
-    # __tablename__ = 'account'
+    __tablename__ = 'account'
 
     name = Column(String)
     type = Column(Enum(AccountTypeEnum))

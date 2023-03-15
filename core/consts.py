@@ -4,8 +4,7 @@ from fastapi import HTTPException
 
 from .models import MethodType, Path
 
-
-NOT_FOUND = HTTPException(404, "Item not found")
+NOT_FOUND = HTTPException(404, 'Item not found')
 
 CREATE: str = 'create'
 READ: str = 'read'
@@ -17,10 +16,12 @@ ENDPOINT_FUNC_LIST: List[str] = [CREATE, READ, READ_ALL, UPDATE, DELETE]
 
 METHOD_TYPE_LIST = {
     CREATE: MethodType(CREATE, 'POST', need_schema=True),
-    UPDATE: MethodType(UPDATE, 'PUT', need_schema=True, path=Path(suffix='_id')),
+    UPDATE: MethodType(
+        UPDATE, 'PUT', need_schema=True, path=Path(suffix='_id')
+    ),
     READ: MethodType(READ, 'GET', path=Path(suffix='_id')),
     READ_ALL: MethodType(READ_ALL, 'GET'),
-    DELETE: MethodType(DELETE, 'DELETE', path=Path(suffix='_id'))
+    DELETE: MethodType(DELETE, 'DELETE', path=Path(suffix='_id')),
 }
 
 ENDPOINT_FUNC_TYPE_LIST: List[MethodType] = [
