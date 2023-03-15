@@ -1,1 +1,0 @@
-rm -rf _teste/endpoints _teste/models _teste/schemas && mkdir _teste/endpoints _teste/models _teste/schemas
