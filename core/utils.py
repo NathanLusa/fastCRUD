@@ -41,39 +41,43 @@ def schema_factory(
     return model
 
 
-def get_func(cls: Type[BaseEndpoint], func_name: str) -> Callable | None:
+def get_func(endpoint: Type[BaseEndpoint], func_name: str) -> Callable | None:
     func_list = getmembers(
-        cls,
+        endpoint,
         lambda x: (isfunction(x) or ismethod(x)) and (x.__name__ == func_name),
     )
     return func_list[0][1] if len(func_list) > 0 else None
 
 
-def get_param_name(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
+def get_param_name(
+    endpoint: Type[BaseEndpoint], method_type: MethodType
+) -> str:
     param_name = ''
     if method_type.path:
         if method_type.path.name:
             param_name = ''
         else:
             if method_type.path.prefix:
-                param_name += method_type.path.prefix + cls.get_endpoint_name()
+                param_name += (
+                    method_type.path.prefix + endpoint.get_path_prefix()
+                )
 
             if method_type.path.suffix:
                 if not method_type.path.prefix:
-                    param_name += cls.get_endpoint_name()
+                    param_name += endpoint.get_path_prefix()
                 param_name += method_type.path.suffix
 
     return param_name
 
 
-def get_path(cls: Type[BaseEndpoint], method_type: MethodType) -> str:
+def get_path(endpoint: Type[BaseEndpoint], method_type: MethodType) -> str:
     path_name = ''
     if method_type.path:
         if method_type.path.name:
             path_name = f'/{method_type.path.name}'
         else:
             path_name = '/{'
-            path_name += get_param_name(cls, method_type)
+            path_name += get_param_name(endpoint, method_type)
             path_name += '}'
 
     return path_name

@@ -1,25 +1,25 @@
+import abc
 from typing import List, Type
 
 from pydantic import BaseModel
 from sqlalchemy.ext.declarative import DeclarativeMeta as Model
 
 
-class BaseEndpoint:
+class BaseEndpoint(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        pass
+        self._endpoints = []
 
-    @staticmethod
-    def get_endpoint_name() -> str:
+    @abc.abstractmethod
+    def get_path_prefix(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    def get_schema() -> Type[BaseModel]:
+    @abc.abstractmethod
+    def get_schema(self) -> Type[BaseModel]:
         raise NotImplementedError
 
-    @staticmethod
-    def get_model() -> Model:
+    @abc.abstractmethod
+    def get_model(self) -> Model:
         raise NotImplementedError
 
-    @staticmethod
-    def get_endpoint_list() -> List[callable]:
-        return []
+    def get_endpoint_list(self) -> List[callable]:
+        return self._endpoints

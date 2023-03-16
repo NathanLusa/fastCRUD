@@ -10,17 +10,14 @@ from ..schemas.account import Account
 
 
 class AccountEndpoints(BaseEndpoint):
-    @staticmethod
-    def get_endpoint_name() -> str:
+    def __init__(self) -> None:
+        super().__init__()
+
+    def get_path_prefix(self) -> str:
         return 'account'
 
-    @staticmethod
-    def get_schema() -> Type[BaseModel]:
+    def get_schema(self) -> Type[BaseModel]:
         return Account
 
-    @staticmethod
-    def get_model() -> Type[BaseModels]:
+    def get_model(self) -> Type[BaseModels]:
         return AccountModel
-
-    # def read(user_id: int):
-    # return {}

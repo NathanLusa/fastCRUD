@@ -11,13 +11,13 @@ from core.crud_router import AlchemyCrudRouter, CrudRouter, MemCrudRouter
 app = FastAPI()
 
 router = AlchemyCrudRouter(app, db=get_db)
-router.add_class(UserEndpoints)
-router.add_class(ProductEndpoints)
-router.add_class(AccountEndpoints)
+router.add_endpoint(UserEndpoints())
+router.add_endpoint(AccountEndpoints())
+# router.add_endpoint(ProductEndpoints())
 
 # router = MemCrudRouter(app)
-# router.add_class(UserEndpoints)
-# router.add_class(ProductEndpoints)
+# router.add_endpoint(UserEndpoints())
+# router.add_endpoint(ProductEndpoints())
 
 for base_declarative in BaseDeclarativeList:
     base_declarative.metadata.create_all(bind=engine)

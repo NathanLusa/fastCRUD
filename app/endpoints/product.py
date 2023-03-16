@@ -12,10 +12,14 @@ class Product(BaseModel):
 
 
 class ProductEndpoints(BaseEndpoint):
-    @staticmethod
-    def get_endpoint_name() -> str:
+    def __init__(self) -> None:
+        super().__init__()
+
+    def get_path_prefix(self) -> str:
         return 'product'
 
-    @staticmethod
-    def get_schema() -> Type[BaseModel]:
+    def get_schema(self) -> Type[BaseModel]:
         return Product
+
+    # def get_model(self) -> Type[BaseModels]:
+    #     return ProductModel
