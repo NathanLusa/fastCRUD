@@ -11,8 +11,8 @@ from core.crud_router import AlchemyCrudRouter, CrudRouter, MemCrudRouter
 app = FastAPI()
 
 router = AlchemyCrudRouter(app, db=get_db)
-router.add_endpoint(UserEndpoints())
-router.add_endpoint(AccountEndpoints())
+router.add_endpoint(UserEndpoints(get_db))
+# router.add_endpoint(AccountEndpoints())
 # router.add_endpoint(ProductEndpoints())
 
 # router = MemCrudRouter(app)

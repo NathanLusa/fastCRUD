@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from copy import copy
 from datetime import datetime, timezone
 from inspect import Parameter
 from typing import Any, Callable, Generator, List, Optional, Type
@@ -232,20 +233,24 @@ class AlchemyCrudRouter(CrudRouter):
             db: Session = Depends(self.db_func), *args: Any, **kwargs: Any
         ) -> Model:
             try:
-                model = kwargs.get(cls.get_endpoint_name())
+                model = kwargs.get(cls.get_path_prefix())
                 db_model: Model = cls.get_model()()  # (**model.dict())
 
                 if hasattr(db_model, 'created_at'):
                     setattr(db_model, 'created_at', datetime.now(timezone.utc))
-                # breakpoint()
+
                 for key, value in model.dict().items():
                     if hasattr(db_model, key):
                         setattr(db_model, key, value)
+
+                cls.before_create(db_model)
 
                 db = next(db.dependency())
                 db.add(db_model)
                 db.commit()
                 db.refresh(db_model)
+
+                cls.after_create(db_model)
 
                 return db_model
             except IntegrityError:
@@ -313,23 +318,28 @@ class AlchemyCrudRouter(CrudRouter):
             db_model: Model = cls.get_model()
 
             actual_model: Model = db.query(db_model).get(item_id)
-            client_model = kwargs.get(cls.get_endpoint_name())
+            client_model = kwargs.get(cls.get_path_prefix())
 
             if not actual_model:
                 raise consts.NOT_FOUND from None
 
+            new_model = copy(actual_model)
             try:
                 for key, value in client_model.dict(exclude={'id'}).items():
-                    if hasattr(actual_model, key):
-                        setattr(actual_model, key, value)
+                    if hasattr(new_model, key):
+                        setattr(new_model, key, value)
 
                 if hasattr(db_model, 'updated_at'):
                     setattr(db_model, 'updated_at', datetime.now(timezone.utc))
 
-                db.commit()
-                db.refresh(actual_model)
+                cls.before_update(actual_model, new_model)
 
-                return actual_model
+                db.commit()
+                db.refresh(new_model)
+                
+                cls.after_update(new_model)
+
+                return new_model
             except IntegrityError as e:
                 db.rollback()
                 self._raise(e)
@@ -352,8 +362,13 @@ class AlchemyCrudRouter(CrudRouter):
             delete_model: Model = db.query(db_model).get(item_id)
 
             if delete_model:
+                cls.before_delete(delete_model)
+                
                 db.delete(delete_model)
                 db.commit()
+                
+                cls.after_delete(delete_model)
+                
                 return delete_model
             else:
                 raise consts.NOT_FOUND from None
